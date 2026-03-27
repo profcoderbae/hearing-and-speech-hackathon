@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #2563eb;
+  --color-accent: #22c55e;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 min-h-screen;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Sign language avatar animations */
+.sign-avatar-container {
+  @apply relative flex items-center justify-center;
+  min-height: 300px;
+}
+
+.hand-sign {
+  @apply text-8xl transition-all duration-300 ease-in-out;
+  animation: signHand 0.6s ease-in-out;
+}
+
+/* Recording pulse animation */
+.recording-pulse {
+  @apply relative;
+}
+.recording-pulse::before {
+  content: '';
+  @apply absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75;
+}
+
+/* Gradient backgrounds */
+.gradient-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+}
+.gradient-accent {
+  background: linear-gradient(135deg, #22c55e 0%, #06b6d4 100%);
+}
+.gradient-warm {
+  background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+}
+
+/* Glass effect */
+.glass {
+  @apply bg-white/80 backdrop-blur-lg border border-white/20;
+}
+
+/* Message bubbles */
+.message-bubble-sent {
+  @apply bg-primary-600 text-white rounded-2xl rounded-br-sm;
+}
+.message-bubble-received {
+  @apply bg-white text-gray-900 rounded-2xl rounded-bl-sm shadow-md;
+}
+
+/* Camera overlay */
+.camera-overlay {
+  @apply absolute inset-0 pointer-events-none;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.3) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+}
