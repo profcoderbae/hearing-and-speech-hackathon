@@ -42,14 +42,8 @@ export default function SignerMode({
   }, [signQueue, currentSignText]);
 
   const handleSignComplete = () => {
+    // Clear the current sign text; the useEffect will pick the next queued item
     setCurrentSignText('');
-    // Process next in queue if any
-    if (signQueue.length > 0) {
-      setTimeout(() => {
-        setCurrentSignText(signQueue[0]);
-        setSignQueue((prev) => prev.slice(1));
-      }, 500);
-    }
   };
 
   const handleSendFromCamera = (text) => {
@@ -119,21 +113,21 @@ export default function SignerMode({
         </div>
       )}
 
+      {/* Sign Language Avatar - always visible when playing */}
+      {currentSignText && (
+        <div className="px-4 pt-4 bg-blue-50 border-b border-blue-100">
+          <SignLanguageAvatar
+            text={currentSignText}
+            autoPlay={true}
+            onComplete={handleSignComplete}
+          />
+        </div>
+      )}
+
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden flex flex-col">
         {view === 'chat' ? (
           <>
-            {/* Sign Language Avatar */}
-            {currentSignText && (
-              <div className="px-4 pt-4">
-                <SignLanguageAvatar
-                  text={currentSignText}
-                  autoPlay={true}
-                  onComplete={handleSignComplete}
-                />
-              </div>
-            )}
-
             {/* Messages */}
             <MessageHistory messages={messages} socketId={socketId} />
 

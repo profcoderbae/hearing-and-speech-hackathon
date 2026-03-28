@@ -33,7 +33,9 @@ export default function HandSignRecognition({ onTextReady, isActive }) {
 
     try {
       // Dynamically import MediaPipe
-      const { Hands } = await import('@mediapipe/hands');
+      const handsModule = await import('@mediapipe/hands');
+      const Hands = handsModule.Hands;
+      const HAND_CONNECTIONS = handsModule.HAND_CONNECTIONS;
       const { Camera } = await import('@mediapipe/camera_utils');
       const { drawConnectors, drawLandmarks } = await import('@mediapipe/drawing_utils');
 
@@ -51,46 +53,51 @@ export default function HandSignRecognition({ onTextReady, isActive }) {
       });
 
       hands.onResults((results) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
+        try {
+          const canvas = canvasRef.current;
+          if (!canvas) return;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return;
 
-        // Draw camera feed
-        ctx.save();
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+          // Draw camera feed
+          ctx.save();
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-          const landmarks = results.multiHandLandmarks[0];
+          if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            const landmarks = results.multiHandLandmarks[0];
 
-          // Draw hand landmarks
-          drawConnectors(ctx, landmarks, Hands.HAND_CONNECTIONS, {
-            color: '#22c55e',
-            lineWidth: 3,
-          });
-          drawLandmarks(ctx, landmarks, {
-            color: '#3b82f6',
-            lineWidth: 1,
-            radius: 4,
-          });
+            // Draw hand landmarks
+            drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
+              color: '#22c55e',
+              lineWidth: 3,
+            });
+            drawLandmarks(ctx, landmarks, {
+              color: '#3b82f6',
+              lineWidth: 1,
+              radius: 4,
+            });
 
-          // Classify gesture
-          const classification = classifyHandGesture(landmarks);
-          const stable = gestureBufferRef.current.add(classification);
+            // Classify gesture
+            const classification = classifyHandGesture(landmarks);
+            const stable = gestureBufferRef.current.add(classification);
 
-          if (stable && stable.letter !== '?') {
-            setCurrentGesture(stable);
-            handleStableGesture(stable.letter);
+            if (stable && stable.letter !== '?') {
+              setCurrentGesture(stable);
+              handleStableGesture(stable.letter);
+            } else {
+              setCurrentGesture(null);
+              resetHold();
+            }
           } else {
             setCurrentGesture(null);
             resetHold();
           }
-        } else {
-          setCurrentGesture(null);
-          resetHold();
-        }
 
-        ctx.restore();
+          ctx.restore();
+        } catch (err) {
+          console.error('Error in hand detection results:', err);
+        }
       });
 
       handsRef.current = hands;
@@ -99,8 +106,12 @@ export default function HandSignRecognition({ onTextReady, isActive }) {
       if (videoRef.current) {
         const camera = new Camera(videoRef.current, {
           onFrame: async () => {
-            if (handsRef.current && videoRef.current) {
-              await handsRef.current.send({ image: videoRef.current });
+            try {
+              if (handsRef.current && videoRef.current) {
+                await handsRef.current.send({ image: videoRef.current });
+              }
+            } catch (err) {
+              console.error('Error processing camera frame:', err);
             }
           },
           width: 640,

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { SpeechRecognizer, isSpeechRecognitionSupported } from '../utils/speechToText';
+import SignLanguageAvatar from './SignLanguageAvatar';
 import MessageHistory from './MessageHistory';
 
 /**
@@ -19,6 +20,8 @@ export default function SpeakerMode({
   const [interimText, setInterimText] = useState('');
   const [textInput, setTextInput] = useState('');
   const [autoSpeak, setAutoSpeak] = useState(true);
+  const [lastSentText, setLastSentText] = useState('');
+  const [showSignPreview, setShowSignPreview] = useState(true);
   const recognizerRef = useRef(null);
   const prevMessageCountRef = useRef(messages.length);
 
@@ -55,18 +58,29 @@ export default function SpeakerMode({
     };
   }, [onSendMessage, onActivity]);
 
-  // Auto-speak partner messages (from sign language → text)
+  // Track last sent message for sign preview
   useEffect(() => {
-    if (autoSpeak && ttsEngine && messages.length > prevMessageCountRef.current) {
+    if (messages.length > prevMessageCountRef.current) {
       const newMessages = messages.slice(prevMessageCountRef.current);
       for (const msg of newMessages) {
-        if (msg.senderId !== socketId && msg.type === 'sign') {
-          ttsEngine.speak(msg.text);
+        if (msg.senderId === socketId && msg.type === 'speech') {
+          setLastSentText(msg.text);
         }
       }
     }
     prevMessageCountRef.current = messages.length;
-  }, [messages, autoSpeak, ttsEngine, socketId]);
+  }, [messages, socketId]);
+
+  // Auto-speak partner messages (from sign language → text)
+  useEffect(() => {
+    if (autoSpeak && ttsEngine && messages.length > 0) {
+      // Find last partner message
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg && lastMsg.senderId !== socketId && lastMsg.type === 'sign') {
+        ttsEngine.speak(lastMsg.text);
+      }
+    }
+  }, [messages.length, autoSpeak, ttsEngine, socketId]);
 
   const toggleRecording = () => {
     if (isRecording) {
@@ -116,6 +130,26 @@ export default function SpeakerMode({
             <span className="w-1.5 h-1.5 bg-accent-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
           </div>
           {partnerActivity.name} is {partnerActivity.activityType}...
+        </div>
+      )}
+
+      {/* Sign Language Preview - shows what your message looks like as signs */}
+      {showSignPreview && lastSentText && (
+        <div className="px-4 pt-3 bg-purple-50 border-b border-purple-100">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-purple-600 font-medium">🤟 Your partner sees this as signs:</span>
+            <button
+              onClick={() => setLastSentText('')}
+              className="text-xs text-purple-400 hover:text-purple-600"
+            >
+              ✕ Close
+            </button>
+          </div>
+          <SignLanguageAvatar
+            text={lastSentText}
+            autoPlay={true}
+            onComplete={() => {}}
+          />
         </div>
       )}
 
